@@ -49,9 +49,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Install GitHub CLI
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+          # Authenticate GitHub CLI
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+
+          # Upload assets
           for file in releases/*.json.xz; do
             echo "Uploading $file"
-            gh release upload ${{ steps.create_release.outputs.upload_url }} "$file"
+            gh release upload ${{ steps.create_release.outputs.id }} "$file" --clobber
           done
 
       - name: Remove old releases
