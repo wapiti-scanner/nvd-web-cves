@@ -1,0 +1,86 @@
+name: Daily CVE Processing and Release
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at midnight every day
+  workflow_dispatch: # Allows for manual triggering of the workflow
+
+jobs:
+  download-process-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Download and process data
+        run: |
+          python sync.py
+
+      - name: Set environment variables for date
+        id: date
+        run: |
+          echo "TAG_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+          echo "RELEASE_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nvd-web-cves-${{ env.TAG_DATE }}
+          release_name: NVD Web CVEs ${{ env.RELEASE_DATE }}
+          body: "Automated daily release of processed CVE data."
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for file in releases/*.json.xz; do
+            echo "Uploading $file"
+            gh release upload ${{ steps.create_release.outputs.upload_url }} "$file"
+          done
+
+      - name: Remove old releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Install GitHub CLI
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+          # Authenticate GitHub CLI
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+
+          # Get the current date in seconds since epoch
+          current_date=$(date +%s)
+
+          # List all releases
+          gh release list --limit 100 | while read -r release; do
+            release_date=$(echo $release | awk '{print $NF}')
+            release_date_seconds=$(date -d $release_date +%s)
+            release_id=$(echo $release | awk '{print $1}')
+
+            # Calculate the age of the release in days
+            release_age_days=$(( (current_date - release_date_seconds) / 86400 ))
+
+            # Delete releases older than 30 days
+            if [ $release_age_days -gt 30 ]; then
+              echo "Deleting release $release_id (age: $release_age_days days)"
+              gh release delete $release_id --yes
+            fi
+          done
+
