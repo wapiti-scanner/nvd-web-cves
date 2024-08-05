@@ -54,10 +54,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          tag_name="nvd-web-cves-${{ env.TAG_DATE }}"
           echo "Release ID: ${{ steps.create_release.outputs.id }}"
+          echo "Tag name: $tag_name"
           for file in releases/*.json.xz; do
             echo "Uploading $file"
-            gh release upload ${{ steps.create_release.outputs.id }} "$file" --clobber || echo "Failed to upload $file"
+            gh release upload "$tag_name" "$file" --clobber || echo "Failed to upload $file"
           done
 
       - name: Remove old releases
