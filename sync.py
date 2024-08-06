@@ -78,7 +78,12 @@ def get_english_description(cve: Dict[str, Any]) -> str:
 
 def get_cvss_scores(cve: Dict[str, Any]) -> Dict[str, float]:
     scores = {}
-    for mykey, nvdkey in [("cvss2", "cvssMetricV2"), ("cvss3", "cvssMetricV3"), ("cvss3.1", "cvssMetricV31")]:
+    for mykey, nvdkey in [
+            ("cvss2", "cvssMetricV2"),
+            ("cvss3", "cvssMetricV3"),
+            ("cvss3.1", "cvssMetricV31"),
+            ("cvss4", "cvssMetricV40"),
+        ]:
         try:
             primary_scores = [metric for metric in cve.get('metrics', {}).get(nvdkey, []) if metric.get('type') == 'Primary']
             if primary_scores:
