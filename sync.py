@@ -18,27 +18,26 @@ xz_dir = "releases"
 
 # List of software to process
 software_list = {
-        "apache": "cpe:2.3:a:apache:http_server:",
-        "php": "cpe:2.3:a:php:php:",
-        "tomcat": "cpe:2.3:a:apache:tomcat:",
-        "nginx": "cpe:2.3:a:f5:nginx:",
-        "wordpress": "cpe:2.3:a:wordpress:wordpress:",
-        "joomla": "cpe:2.3:a:joomla:joomla:",
-        "drupal": "cpe:2.3:a:drupal:drupal:",
-        "openssl": "cpe:2.3:a:openssl:openssl:",
-        "nodejs": "cpe:2.3:a:nodejs:node.js:",
-        "django": "cpe:2.3:a:django:django:",
-        "jquery": "cpe:2.3:a:jquery:jquery:",
-        "jboss": "cpe:2.3:a:redhat:jboss:",
-        "jetty": "cpe:2.3:a:eclipse:jetty:",
-        "rubyonrails": "cpe:2.3:a:rubyonrails:rubyonrails:",
-        "iis": "cpe:2.3:a:microsoft:iis:",
-        "spip": "cpe:2.3:a:spip:spip:",
-        "prestashop": "cpe:2.3:a:prestashop:prestashop:",
-        "nextjs": "cpe:2.3:a:vercel:next.js:",
-        "underscorejs": "cpe:2.3:a:underscorejs:underscore:",
         "angularjs": "cpe:2.3:a:angularjs:angular.js:",
+        "apache": "cpe:2.3:a:apache:http_server:",
+        "drupal": "cpe:2.3:a:drupal:drupal:",
+        "iis": "cpe:2.3:a:microsoft:internet_information_services:",
+        "jetty": "cpe:2.3:a:eclipse:jetty:",
+        "joomla": "cpe:2.3:a:joomla:joomla:",
+        "jquery": "cpe:2.3:a:jquery:jquery:",
+        "nextjs": "cpe:2.3:a:vercel:next.js:",
+        "nginx": "cpe:2.3:a:f5:nginx:",
+        "nodejs": "cpe:2.3:a:nodejs:node.js:",
+        "openssl": "cpe:2.3:a:openssl:openssl:",
+        "php": "cpe:2.3:a:php:php:",
+        "prestashop": "cpe:2.3:a:prestashop:prestashop:",
+        "spip": "cpe:2.3:a:spip:spip:",
+        "tomcat": "cpe:2.3:a:apache:tomcat:",
+        "underscorejs": "cpe:2.3:a:underscorejs:underscore:",
+        "weblogic": "cpe:2.3:a:oracle:weblogic_server:",
+        "wordpress": "cpe:2.3:a:wordpress:wordpress:",
 }
+
 cve_archive_pattern = re.compile(r"CVE-\d{4}.json.xz")
 
 def download_file(url, local_path):
@@ -79,7 +78,7 @@ def get_english_description(cve: Dict[str, Any]) -> str:
 
 def get_cvss_scores(cve: Dict[str, Any]) -> Dict[str, float]:
     scores = {}
-    for mykey, nvdkey in [("cvss2", "cvssMetricV2"), ("cvss3", "cvssMetricV3")]:
+    for mykey, nvdkey in [("cvss2", "cvssMetricV2"), ("cvss3", "cvssMetricV3"), ("cvss3.1", "cvssMetricV31")]:
         try:
             primary_scores = [metric for metric in cve.get('metrics', {}).get(nvdkey, []) if metric.get('type') == 'Primary']
             if primary_scores:

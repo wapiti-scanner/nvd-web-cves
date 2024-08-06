@@ -23,26 +23,24 @@ This project automates the process of downloading, processing, and generating sh
 
 The project currently monitors the following software:
 
-- Apache HTTP Server
-- PHP
-- Tomcat
-- Nginx
-- WordPress
-- Joomla
-- Drupal
-- OpenSSL
-- Node.js
-- Django
-- jQuery
-- JBoss
-- Jetty
-- Ruby on Rails
-- IIS
-- SPIP
-- PrestaShop
-- Next.js
-- Underscore.js
 - Angular.js
+- Apache HTTP Server
+- Drupal
+- jQuery
+- IIS
+- Jetty
+- Joomla
+- Next.js
+- Node.js
+- Nginx
+- OpenSSL
+- PHP
+- PrestaShop
+- SPIP
+- Tomcat
+- Underscore.js
+- WebLogic
+- WordPress
 
 ## Installation
 
