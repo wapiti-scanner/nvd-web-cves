@@ -20,6 +20,7 @@ xz_dir = "releases"
 software_list = {
     "angularjs": "cpe:2.3:a:angularjs:angular.js:",
     "apache": "cpe:2.3:a:apache:http_server:",
+    "cherokee": "cpe:2.3:a:cherokee-project:cherokee:",
     "drupal": "cpe:2.3:a:drupal:drupal:",
     "iis": "cpe:2.3:a:microsoft:internet_information_services:",
     "jetty": "cpe:2.3:a:eclipse:jetty:",

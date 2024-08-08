@@ -25,6 +25,7 @@ The project currently monitors the following software:
 
 - Angular.js
 - Apache HTTP Server
+- Cherokee
 - Drupal
 - jQuery
 - IIS
