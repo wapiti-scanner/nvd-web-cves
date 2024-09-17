@@ -67,14 +67,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           current_date=$(date +%s)
-          gh release list --limit 100 | while read -r release; do
-            release_date=$(echo $release | awk '{print $NF}')
-            release_date_seconds=$(date -d $release_date +%s)
-            release_id=$(echo $release | awk '{print $1}')
+          gh release list --limit 100 --json id,createdAt --jq '.[] | [.id, .createdAt] | @tsv' | \
+          while IFS=$'\t' read -r release_id release_date; do
+            release_date_seconds=$(date -d "$release_date" +%s)
             release_age_days=$(( (current_date - release_date_seconds) / 86400 ))
             if [ $release_age_days -gt 30 ]; then
               echo "Deleting release $release_id (age: $release_age_days days)"
-              gh release delete $release_id --yes
+              gh release delete "$release_id" --yes
             fi
           done
 
