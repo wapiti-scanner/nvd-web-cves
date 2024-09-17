@@ -67,13 +67,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           current_date=$(date +%s)
-          gh release list --limit 100 --json id,createdAt --jq '.[] | [.id, .createdAt] | @tsv' | \
-          while IFS=$'\t' read -r release_id release_date; do
-            release_date_seconds=$(date -d "$release_date" +%s)
-            release_age_days=$(( (current_date - release_date_seconds) / 86400 ))
-            if [ $release_age_days -gt 30 ]; then
-              echo "Deleting release $release_id (age: $release_age_days days)"
-              gh release delete "$release_id" --yes
+          gh release list --limit 100 --json tagName --jq '.[] | [.tagName] | @tsv' | while read -r tagName; do
+            # Extract the date from the tagName
+            release_date=$(echo $tagName | grep -oP '\d{8}')
+            
+            # Convert the extracted date into seconds
+            release_date_seconds=$(date -d "$release_date" +%s 2>/dev/null)
+            
+            # If the date conversion was successful
+            if [ $? -eq 0 ]; then
+              release_age_days=$(( (current_date - release_date_seconds) / 86400 ))
+              if [ $release_age_days -gt 30 ]; then
+                echo "Deleting release $tagName (age: $release_age_days days)"
+                gh release delete "$tagName" --yes
+                # Delete the associated tag
+                echo "Deleting tag $tagName"
+                git push origin --delete $tagName || echo "Failed to delete tag $tagName"
+              fi
+            else
+              echo "Failed to extract or parse the date for release $tagName"
             fi
           done
 
