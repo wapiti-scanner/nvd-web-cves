@@ -5,18 +5,21 @@ on:
     - cron: '0 0 * * *' # Runs at midnight every day
   workflow_dispatch: # Allows for manual triggering of the workflow
 
+permissions:
+  contents: write
+
 jobs:
   download-process-release:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.10'
+          python-version: '3.14'
 
       - name: Install dependencies
         run: |
@@ -28,39 +31,34 @@ jobs:
           python sync.py
 
       - name: Set environment variables for date
-        id: date
         run: |
           echo "TAG_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
           echo "RELEASE_DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
 
       - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: nvd-web-cves-${{ env.TAG_DATE }}
-          release_name: NVD Web CVEs ${{ env.RELEASE_DATE }}
-          body: "Automated daily release of processed CVE data."
-          draft: false
-          prerelease: false
-
-      - name: Install GitHub CLI
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
+          tag_name="nvd-web-cves-${{ env.TAG_DATE }}"
+          # A manual run on a day that already has a release refreshes its assets instead of failing
+          if gh release view "$tag_name" > /dev/null 2>&1; then
+            echo "Release $tag_name already exists, its assets will be replaced"
+          else
+            # Created as a draft so that Wapiti, which reads the latest release, never sees it without its assets
+            gh release create "$tag_name" --draft \
+              --title "NVD Web CVEs ${{ env.RELEASE_DATE }}" \
+              --notes "Automated daily release of processed CVE data." \
+              --target "$GITHUB_SHA"
+          fi
 
       - name: Upload Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag_name="nvd-web-cves-${{ env.TAG_DATE }}"
-          echo "Release ID: ${{ steps.create_release.outputs.id }}"
           echo "Tag name: $tag_name"
-          for file in releases/*.json.xz; do
-            echo "Uploading $file"
-            gh release upload "$tag_name" "$file" --clobber || echo "Failed to upload $file"
-          done
+          gh release upload "$tag_name" releases/*.json.xz --clobber
+          gh release edit "$tag_name" --draft=false --latest
 
       - name: Remove old releases
         env:
@@ -70,10 +68,10 @@ jobs:
           gh release list --limit 100 --json tagName --jq '.[] | [.tagName] | @tsv' | while read -r tagName; do
             # Extract the date from the tagName
             release_date=$(echo $tagName | grep -oP '\d{8}')
-            
+
             # Convert the extracted date into seconds
             release_date_seconds=$(date -d "$release_date" +%s 2>/dev/null)
-            
+
             # If the date conversion was successful
             if [ $? -eq 0 ]; then
               release_age_days=$(( (current_date - release_date_seconds) / 86400 ))
@@ -88,4 +86,3 @@ jobs:
               echo "Failed to extract or parse the date for release $tagName"
             fi
           done
-
