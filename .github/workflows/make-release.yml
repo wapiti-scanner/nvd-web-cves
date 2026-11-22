@@ -86,3 +86,15 @@ jobs:
               echo "Failed to extract or parse the date for release $tagName"
             fi
           done
+
+      # Last step on purpose: the release is published anyway, but the failed run sends a notification
+      - name: Check that every software still gets new CVEs
+        run: |
+          if [ -s releases/stale_software.txt ]; then
+            echo "No recent CVE for some software, their CPE name in the NVD may have changed (see sync.py):"
+            while read -r line; do
+              echo "::error title=Possibly stale CVE data::$line"
+            done < releases/stale_software.txt
+            exit 1
+          fi
+          echo "Every checked software got a CVE in the last year"
